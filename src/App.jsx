@@ -6,6 +6,7 @@ import "./App.css";
 function App() {
   const [data, setData] = useState(null);
   const [deleteData, setDeleteData] = useState([]);
+  const [showDelete, setShowDelete] = useState(false);
   const [pages, setPages] = useState(null);
   const [page, setPage] = useState(1);
 
@@ -21,6 +22,8 @@ function App() {
         const result = await response.json();
         setPages(result.total_pages);
         setData(result.data);
+        setDeleteData([]);
+        setShowDelete(false);
       } catch (err) {
         console.log(err);
       }
@@ -31,7 +34,11 @@ function App() {
   console.log(data);
 
   const deleteHandler = (id) => {
+    const deleteItem = data.filter((item) => item.id === id)[0];
     const newData = [...data.filter((item) => item.id !== id)];
+    setDeleteData((prev) => {
+      return [...prev, { ...deleteItem, delete: true }];
+    });
     setData(newData);
   };
 
@@ -47,9 +54,35 @@ function App() {
     }
   };
 
+  const showDeleteHandler = () => {
+    if (!showDelete) {
+      setData((prev) => {
+        return [...prev, ...deleteData];
+      });
+      setShowDelete((prev) => !prev);
+      return;
+    }
+    if (showDelete) {
+      const newData = data.filter((item) => {
+        if (item.delete) {
+          return;
+        }
+        return item;
+      });
+      setData(newData);
+      setShowDelete((prev) => !prev);
+      return;
+    }
+  };
+
   return (
     <>
-      <h1>UOLO USER LIST</h1>
+      <div style={{ display: "flex", gap: "1rem" }}>
+        <h1>UOLO USER LIST</h1>
+        <button style={{ alignSelf: "center" }} onClick={showDeleteHandler}>
+          Show deleted items
+        </button>
+      </div>
       {/* <table style={{ width: "100%" }} border={1}>
         <tr>
           <th style={{ width: "30%", border: "none" }}>profile pic</th>
@@ -105,7 +138,7 @@ function App() {
                 padding: "12px 14px",
                 display: "flex",
                 flexDirection: "column",
-                backgroundColor: "#ffffff",
+                backgroundColor: item.delete ? "grey" : "#ffffff",
                 border: "1px solid black",
                 boxShadow: "2px 2px 10px #000000",
                 width: "28%",
@@ -129,6 +162,7 @@ function App() {
               <p>{item.first_name}</p>
               <p>{item.email}</p>
               <button
+                disabled={item.delete ? true : false}
                 style={{
                   border: "none",
                   background: "transparent",
